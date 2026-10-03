@@ -45,6 +45,9 @@ int main() {
     CEK(p.adalah(F("LED")) && p.adalah(F("on"), 1));
     CEK(!p.adalah("LE") && !p.adalah("LEDS") && !p.adalah("ON"));
     CEK(!p.adalah("ON", 2) && !p.adalah("", 1));
+    // Hanya A-Z/a-z yang disamakan: '@' '[' '`' '{' (tetangga huruf di ASCII) tetap berbeda.
+    s.kirim("@[ az09\n");
+    CEK(p.ada() && p.adalah("@[") && !p.adalah("`{") && p.adalah("AZ09", 1) && !p.adalah("A[09", 1));
   }
   { // argumen: angka, negatif, desimal, bukan angka, tidak ada
     Stream s;
