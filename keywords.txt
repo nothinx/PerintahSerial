@@ -1,0 +1,16 @@
+#######################################
+# PerintahSerial
+#######################################
+
+PerintahSerial	KEYWORD1
+PerintahSerialUkuran	KEYWORD1
+
+ada	KEYWORD2
+terlaluPanjang	KEYWORD2
+adalah	KEYWORD2
+jumlahArgumen	KEYWORD2
+teks	KEYWORD2
+angka	KEYWORD2
+adaAngka	KEYWORD2
+desimal	KEYWORD2
+baris	KEYWORD2
