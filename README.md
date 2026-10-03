@@ -102,6 +102,28 @@ python gambar.py   # butuh g++ dan matplotlib
 
 <!-- simulasi:akhir -->
 
+## Kecepatan & memori
+
+Diukur dengan simavr (simulator ATmega328P yang akurat per siklus) di Arduino Uno 16 MHz. Lima perintah (`LED`, `MOTOR`, `SET`, `GET`, `HELP`), baris `SET KP 2.5` dibaca dari `Stream` di memori dengan akhiran baris yang dibutuhkan tiap library, lalu `2.5` diubah menjadi `float`. Sketch yang sama untuk semua library.
+
+| | PerintahSerial 1.0.1 | PerintahSerial 1.0.0 | SerialCommands 2.2.0 | SerialCmd 1.1.6 |
+|---|---|---|---|---|
+| Tanpa data (setiap `loop()`) | 103 siklus (6 µs) | 103 | 79 | 92 |
+| Satu baris `SET KP 2.5` | 3.217 (201 µs) | 4.009 (251 µs) | 3.500 (219 µs) | 3.071 (192 µs) |
+| RAM (objek + buffer + daftar perintah) | 71 B | 71 B | 126 B | 134 B |
+| Flash sketch yang sama | 5.642 B | 5.714 B | 6.058 B | 5.938 B |
+
+`ada()` O(k) untuk k karakter yang baru masuk (setiap karakter dibaca sekali). `adalah()`, `teks()`, `angka()`, `desimal()` O(panjang baris), karena kata ke-i dicari dari awal baris; dengan baris ≤ 63 karakter ini lebih murah daripada menyimpan posisi tiap kata di RAM. Memori tetap, O(ukuran buffer).
+
+Optimasi di 1.0.1 (perilaku sama, 63 kasus uji lolos):
+- `ada()` membaca dengan `read()` saja (−1 berarti kosong), satu panggilan virtual per karakter, bukan dua (`available()` lalu `read()`).
+- Pencarian kata memeriksa setiap karakter sekali, bukan dua kali.
+- Perbandingan huruf besar/kecil tanpa `tolower()` (panggilan fungsi pustaka di AVR).
+
+Di mana kita kalah: SerialCmd ±150 siklus lebih cepat per baris karena membandingkan perintah apa adanya (huruf besar/kecil dibedakan, "led" tidak sama dengan "LED") dan memotong kata sekali lalu memanggil callback. SerialCommands ±25 siklus lebih cepat saat tidak ada data. Selisih itu di bawah 10 µs per baris.
+
+Mengulang pengukuran: sketch `extras/benchmark/PerintahSerialBenchmark` (butuh simavr).
+
 ## Kata dan argumen
 
 Baris dipecah menjadi kata. Kata ke-0 adalah perintah, kata ke-1 dan seterusnya argumen:
@@ -192,7 +214,7 @@ g++ -std=c++11 -I. -I../../src uji.cpp ../../src/*.cpp -o uji && ./uji
 
 ## Status
 
-Versi 1.0.0 sudah lolos uji logika otomatis dan compile di 7 board, tapi **belum diuji di hardware sungguhan**. Jika menemukan masalah, silakan buka *issue* di GitHub.
+Versi 1.0.1 sudah lolos uji logika otomatis dan compile di 7 board, tapi **belum diuji di hardware sungguhan**. Jika menemukan masalah, silakan buka *issue* di GitHub.
 
 ## Lisensi
 

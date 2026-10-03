@@ -68,6 +68,19 @@ python gambar.py   # needs g++ and matplotlib
 
 <!-- simulasi:akhir -->
 
+## Speed & memory
+
+Measured with simavr (cycle-accurate ATmega328P simulator), Arduino Uno 16 MHz: five commands, the line `SET KP 2.5` read from an in-memory `Stream`, `2.5` parsed to `float`. Same sketch for every library.
+
+| | PerintahSerial 1.0.1 | 1.0.0 | SerialCommands 2.2.0 | SerialCmd 1.1.6 |
+|---|---|---|---|---|
+| No data (every `loop()`) | 103 cycles (6 µs) | 103 | 79 | 92 |
+| One `SET KP 2.5` line | 3,217 (201 µs) | 4,009 | 3,500 | 3,071 |
+| RAM | 71 B | 71 B | 126 B | 134 B |
+| Flash, same sketch | 5,642 B | 5,714 B | 6,058 B | 5,938 B |
+
+`ada()` is O(new characters); word lookups are O(line length). Since 1.0.1 `ada()` makes one virtual call per character, word search scans each character once, and case folding avoids `tolower()`. SerialCmd is ~150 cycles faster per line because it compares case-sensitively. Benchmark sketch: `extras/benchmark/PerintahSerialBenchmark`.
+
 ## Function reference
 
 | Indonesian | English | Notes |
@@ -92,7 +105,7 @@ Index 0 is the command, 1 and up are arguments.
 
 ## Status
 
-Version 1.0.0 passes automated logic tests and compiles on Uno, Mega, ESP32, ESP32-C3, ESP32-S3, STM32 Blackpill F411, and Bluepill F103. It has **not yet been tested on real hardware**.
+Version 1.0.1 passes automated logic tests and compiles on Uno, Mega, ESP32, ESP32-C3, ESP32-S3, STM32 Blackpill F411, and Bluepill F103. It has **not yet been tested on real hardware**.
 
 ## License
 
