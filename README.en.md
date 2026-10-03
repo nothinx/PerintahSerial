@@ -35,6 +35,39 @@ void loop() {
 - Overlong lines are dropped whole and reported by `terlaluPanjang()`. Their tail is never run as a command (SerialCommands 2.2.0 and SerialCmd 1.1.6 do run it, read from their source).
 - Fixed buffer, 71 bytes of RAM per object on an Uno. Command names can live in flash with `F()`.
 
+## Simulation results
+
+<!-- simulasi:awal -->
+
+**A Serial Monitor session**, run on a PC with a fake `Stream` and this library's code (`extras/simulasi`). Each row is one line sent; the columns are what the library read. `angka(i)` shows `default` when the argument is not a whole number.
+
+| Typed | Note | `ada()` | `adalah("LED")` | Command `teks(0)` | Arguments `teks(i)` | `angka(i)` | `desimal(i, NAN)` | `terlaluPanjang()` |
+|---|---|---|---|---|---|---|---|---|
+| `LED ON\n` | LF ending | true | true | `LED` | `ON` | default | NAN | false |
+| `led On\r` | CR ending, mixed case | true | true | `led` | `On` | default | NAN | false |
+| `Led oN\r\n` | CRLF ending | true | true | `Led` | `oN` | default | NAN | false |
+| `SET  kp   2.5\n` | double spaces | true | false | `SET` | `kp`, `2.5` | default, default | NAN, 2.5 | false |
+| `SET kp=2.5\r\n` | `=` separator | true | false | `SET` | `kp`, `2.5` | default, default | NAN, 2.5 | false |
+| `M 100,-200\n` | comma separator, negative | true | false | `M` | `100`, `-200` | 100, -200 | 100, -200 | false |
+| `SET kp 2,5\n` | decimal with a comma | true | false | `SET` | `kp`, `2`, `5` | default, 2, 5 | NAN, 2, 5 | false |
+| `KEDIP 12abc\n` | not a number | true | false | `KEDIP` | `12abc` | default | NAN | false |
+| `\r\n` | empty line | false |  |  |  |  |  | false |
+| `AAAA...A (70) \n` | 70 chars, 64-byte buffer | false |  |  |  |  |  | true |
+| `LED OFF\n` | next line | true | true | `LED` | `OFF` | default | NAN | false |
+
+![Timing: PerintahSerial keeps loop() running, readString() blocks for one second](extras/gambar/waktu-baca.svg)
+
+Simulation: the line `SET kp 2.5\r\n` arrives one character at a time at 9600 baud (1.04 ms per character), with an assumed 0.1 ms of other work per `loop()`. With `ada()`, the command is ready at 11.5 ms and `loop()` ran 116 times meanwhile. `Serial.readString()` returns only after the default 1000 ms Stream timeout, at 1012.5 ms, and `loop()` is stuck until then (computed from Stream.cpp in ArduinoCore-avr 1.8.8, not measured).
+
+Regenerate:
+
+```sh
+cd extras/simulasi
+python gambar.py   # needs g++ and matplotlib
+```
+
+<!-- simulasi:akhir -->
+
 ## Function reference
 
 | Indonesian | English | Notes |

@@ -69,6 +69,39 @@ void loop() {
 
 Ketik `LED ON` di Serial Monitor lalu tekan Enter. Panggil `ada()` di setiap `loop()` dan hindari `delay()` panjang.
 
+## Hasil simulasi
+
+<!-- simulasi:awal -->
+
+**Sesi Serial Monitor**, dijalankan di PC dengan `Stream` tiruan dan kode library ini (`extras/simulasi`). Setiap baris tabel adalah satu baris yang dikirim; kolom lainnya adalah apa yang dibaca library. `angka(i)` bernilai `bawaan` jika argumen bukan bilangan bulat.
+
+| Diketik | Keterangan | `ada()` | `adalah("LED")` | Perintah `teks(0)` | Argumen `teks(i)` | `angka(i)` | `desimal(i, NAN)` | `terlaluPanjang()` |
+|---|---|---|---|---|---|---|---|---|
+| `LED ON\n` | akhiran LF | true | true | `LED` | `ON` | bawaan | NAN | false |
+| `led On\r` | akhiran CR, huruf campur | true | true | `led` | `On` | bawaan | NAN | false |
+| `Led oN\r\n` | akhiran CRLF | true | true | `Led` | `oN` | bawaan | NAN | false |
+| `SET  kp   2.5\n` | spasi ganda | true | false | `SET` | `kp`, `2.5` | bawaan, bawaan | NAN, 2.5 | false |
+| `SET kp=2.5\r\n` | pemisah = | true | false | `SET` | `kp`, `2.5` | bawaan, bawaan | NAN, 2.5 | false |
+| `M 100,-200\n` | pemisah koma, negatif | true | false | `M` | `100`, `-200` | 100, -200 | 100, -200 | false |
+| `SET kp 2,5\n` | desimal ditulis dengan koma | true | false | `SET` | `kp`, `2`, `5` | bawaan, 2, 5 | NAN, 2, 5 | false |
+| `KEDIP 12abc\n` | bukan angka | true | false | `KEDIP` | `12abc` | bawaan | NAN | false |
+| `\r\n` | baris kosong | false |  |  |  |  |  | false |
+| `AAAA...A (70) \n` | 70 karakter, buffer 64 | false |  |  |  |  |  | true |
+| `LED OFF\n` | baris berikutnya | true | true | `LED` | `OFF` | bawaan | NAN | false |
+
+![Diagram waktu: PerintahSerial tidak menahan loop(), readString() menahan 1 detik](extras/gambar/waktu-baca.svg)
+
+Simulasi: baris `SET kp 2.5\r\n` datang per karakter pada 9600 baud (1,04 ms per karakter), dengan anggapan isi `loop()` lainnya butuh 0,1 ms per putaran. Dengan `ada()`, perintah siap pada 11,5 ms dan `loop()` sempat berputar 116 kali. `Serial.readString()` baru kembali setelah timeout bawaan Stream 1000 ms, yaitu pada 1.012,5 ms, dan selama itu `loop()` tertahan (dihitung dari Stream.cpp ArduinoCore-avr 1.8.8, bukan diukur).
+
+Tabel dan grafik dibuat dari simulasi di PC yang menjalankan kode library ini (`extras/simulasi`):
+
+```sh
+cd extras/simulasi
+python gambar.py   # butuh g++ dan matplotlib
+```
+
+<!-- simulasi:akhir -->
+
 ## Kata dan argumen
 
 Baris dipecah menjadi kata. Kata ke-0 adalah perintah, kata ke-1 dan seterusnya argumen:
